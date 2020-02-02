@@ -2,8 +2,8 @@
 
 require __DIR__.'/../vendor/autoload.php';
 
-use App\Logger;
 use App\Responder;
+use App\Logger\Logger;
 use App\RequestHandler;
 use App\Exceptions\BetterprotectErrorException;
 
@@ -31,9 +31,11 @@ while($line = fgets($f)) {
             } else {
                 $action = RequestHandler::POSTFIX_ACTION_DEFER;
             }
+
+            (new Logger)->file->info($exception->getMessage(), (array) $exception);
         }
 
-        (new Logger)->log('Response ' . $action, LOG_INFO);
+        (new Logger)->syslog->info('Response ' . $action);
 
         print (new Responder($action))->respond();
 
