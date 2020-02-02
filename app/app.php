@@ -1,9 +1,11 @@
 <?php
 
-require 'BetterprotectErrorException.php';
-require 'Logger.php';
-require 'RequestHandler.php';
-require 'Responder.php';
+require '../vendor/autoload.php';
+
+use App\Logger;
+use App\Responder;
+use App\RequestHandler;
+use App\Exceptions\BetterprotectErrorException;
 
 $f = fopen( 'php://stdin', 'r' );
 

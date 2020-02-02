@@ -1,7 +1,13 @@
 <?php
 
+namespace App;
+
+use PDO;
+use PDOException;
+use App\Exceptions\BetterprotectErrorException;
+
 class RequestHandler {
-    const CONFIG = 'app.json';
+    const CONFIG = '../config/app.json';
 
     const POSTFIX_ACTION_DEFER = 'defer';
     const POSTFIX_ACTION_DUNNO = 'dunno';

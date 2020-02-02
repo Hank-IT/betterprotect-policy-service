@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Exceptions;
+
+use Exception;
+use App\Logger;
+
 class BetterprotectErrorException extends Exception
 {
     protected $action;

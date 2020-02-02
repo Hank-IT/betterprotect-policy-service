@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 class Responder
 {
     protected $action;

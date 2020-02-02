@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 class Logger
 {
     public function log(string $line, $priority = LOG_INFO)
