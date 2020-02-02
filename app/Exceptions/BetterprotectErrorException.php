@@ -17,6 +17,8 @@ class BetterprotectErrorException extends Exception
         $logger = new Logger;
 
         $logger->log($message, LOG_ERR);
+
+        $logger->debug(json_encode($this));
     }
 
     public function getPostfixAction()

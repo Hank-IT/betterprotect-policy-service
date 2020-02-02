@@ -1,4 +1,6 @@
 {
+    "name": "Betterprotect-Policy-Service",
+    "version": "1.0",
     "require": {
         "php": "^7.2",
         "ext-json": "*",
@@ -8,10 +10,6 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/"
-        },
-        "classmap": [
-            "database/seeds",
-            "database/factories"
-        ]
+        }
     }
 }

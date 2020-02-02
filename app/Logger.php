@@ -10,4 +10,9 @@ class Logger
         syslog($priority, 'Betterprotect Policy Server: ' . $line);
         closelog();
     }
+
+    public function debug(string $line)
+    {
+        file_put_contents(__DIR__ . '/../storage/debug.log', $line . "\n", FILE_APPEND);
+    }
 }
