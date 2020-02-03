@@ -24,6 +24,10 @@ while($line = fgets($f)) {
                 throw new BetterprotectErrorException('No options received from postfix.', RequestHandler::POSTFIX_ACTION_DEFER);
             }
 
+            if ($options['request'] !== 'smtpd_access_policy') {
+                throw new BetterprotectErrorException('Unknown request type.', RequestHandler::POSTFIX_ACTION_DEFER);
+            }
+
             $action = (new RequestHandler($options))->getResponse();
         } catch (Throwable $exception) {
             if (method_exists($exception, 'getPostfixAction')) {
@@ -35,7 +39,7 @@ while($line = fgets($f)) {
             (new Logger)->file->info($exception->getMessage(), (array) $exception);
         }
 
-        (new Logger)->syslog->info('Response ' . $action);
+        (new Logger)->syslog->info('Decision: ' . $action);
 
         print (new Responder($action))->respond();
 

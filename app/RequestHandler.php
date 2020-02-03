@@ -8,7 +8,7 @@ use App\Exceptions\BetterprotectErrorException;
 class RequestHandler {
     const CONFIG = __DIR__ . DIRECTORY_SEPARATOR . '../config/app.json';
 
-    const POSTFIX_ACTION_DEFER = 'defer';
+    const POSTFIX_ACTION_DEFER = 'defer_if_permit';
     const POSTFIX_ACTION_DUNNO = 'dunno';
 
     protected $data;
@@ -52,11 +52,7 @@ class RequestHandler {
             })
             ->first();
 
-        // There should always be a match, except when
-        // there isn't any rule configured at all.
         if (empty($queryData)) {
-            $this->logger->syslog->info('Response ' . self::POSTFIX_ACTION_DUNNO);
-
             $this->logger->file->info('Query returned no results');
 
             return self::POSTFIX_ACTION_DUNNO;
