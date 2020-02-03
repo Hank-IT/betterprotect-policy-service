@@ -2,12 +2,13 @@
 
 namespace App;
 
+use Email\Parse;
+use App\Support\IPv4;
 use App\Logger\Logger;
 use App\Exceptions\BetterprotectErrorException;
 
 class RequestHandler {
     const CONFIG = __DIR__ . DIRECTORY_SEPARATOR . '../config/app.json';
-
     const POSTFIX_ACTION_DEFER = 'defer_if_permit';
     const POSTFIX_ACTION_DUNNO = 'dunno';
 
@@ -19,6 +20,13 @@ class RequestHandler {
 
     protected $capsule;
 
+    /**
+     * RequestHandler constructor.
+     *
+     * @param array $data
+     *
+     * @throws BetterprotectErrorException
+     */
     public function __construct(array $data)
     {
         $this->data = $data;
@@ -30,12 +38,16 @@ class RequestHandler {
         $this->capsule = (new Database($config['database']))->boot();
     }
 
+    /**
+     * Verify the data and generate a response.
+     *
+     * @return mixed|string
+     */
     public function getResponse()
     {
-        // ToDo
-        // Verify if $this->data['client_address'] is inside a configured client_ipv4_net
-        // Query all ipv4 networks
-        // If match is found set $this->data['client_address'] = $queryData['client_payload']
+        $this->handleIPv4Networks();
+        $this->handleMailFromDomain();
+        $this->handleMailFromLocalPart();
 
         $queryData = (array) $this->capsule->getConnection('default')
             ->table('client_sender_access')
@@ -50,6 +62,7 @@ class RequestHandler {
                 $query->where('sender_payload', '=', $this->data['sender'])
                     ->orWhere('sender_payload', '=', '*');
             })
+            ->orderBy('id', 'asc')
             ->first();
 
         if (empty($queryData)) {
@@ -63,6 +76,12 @@ class RequestHandler {
         return $action;
     }
 
+    /**
+     * Verify against the client data in conjunction with the sender.
+     *
+     * @param $queryData
+     * @return mixed|string
+     */
     protected function verify($queryData)
     {
         // Wildcard client, go straight to sender verify
@@ -96,6 +115,103 @@ class RequestHandler {
         return self::POSTFIX_ACTION_DUNNO;
     }
 
+    /**
+     * Query all rows with mail_from_domain as sender_type.
+     *
+     * Set $this->data['sender'] to sender_payload if match is found,
+     * so that the later query can identify the data correctly.
+     */
+    protected function handleMailFromDomain()
+    {
+        if (empty($this->data['sender']) || $this->data['sender'] === '*') {
+            return;
+        }
+
+        $mailFromDomains = $this->capsule->getConnection('default')
+            ->table('client_sender_access')
+            ->select('sender_payload')
+            ->where('sender_type', '=', 'mail_from_domain')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        foreach ($mailFromDomains as $mailFromDomain) {
+            $result = Parse::getInstance()->parse($this->data['sender']);
+
+            if ($result['email_addresses'][0]['domain'] === $mailFromDomain->sender_payload) {
+                $this->data['sender'] = $mailFromDomain->sender_payload;
+
+                $this->logger->file->info('sender matches domain ' . $mailFromDomain->sender_payload);
+
+                break;
+            }
+        }
+    }
+
+    /**
+     * Query all rows with mail_from_localpart as sender_type.
+     *
+     * Set $this->data['sender'] to sender_payload if match is found,
+     * so that the later query can identify the data correctly.
+     */
+    protected function handleMailFromLocalPart()
+    {
+        if (empty($this->data['sender']) || $this->data['sender'] === '*') {
+            return;
+        }
+
+        $mailFromLocalParts = $this->capsule->getConnection('default')
+            ->table('client_sender_access')
+            ->select('sender_payload')
+            ->where('sender_type', '=', 'mail_from_localpart')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        foreach ($mailFromLocalParts as $mailFromLocalPart) {
+            $result = Parse::getInstance()->parse($this->data['sender']);
+
+            if ($result['email_addresses'][0]['local_part'] === $mailFromLocalPart->sender_payload) {
+                $this->data['sender'] = $mailFromLocalPart->sender_payload;
+
+                $this->logger->file->info('sender matches localpart ' . $mailFromLocalPart->sender_payload);
+
+                break;
+            }
+        }
+    }
+
+    /**
+     * Query all rows with client_ipv4_net as client_type.
+     *
+     * Set $this->data['client_address'] to client_payload if match is
+     * found, so that the later query can identify the data correctly.
+     */
+    protected function handleIPv4Networks()
+    {
+        $ipv4Networks = $this->capsule->getConnection('default')
+            ->table('client_sender_access')
+            ->select('client_payload')
+            ->where('client_type', '=', 'client_ipv4_net')
+            ->orderBy('id', 'asc')
+            ->get();
+
+
+        foreach ($ipv4Networks as $ipv4Network) {
+            if (IPv4::inNetwork($this->data['client_address'], $ipv4Network->client_payload)) {
+                $this->data['client_address'] = $ipv4Network->client_payload;
+
+                $this->logger->file->info('client_address is in network ' . $ipv4Network->client_payload);
+
+                break;
+            }
+        }
+    }
+
+    /**
+     * Verify the sender.
+     *
+     * @param $queryData
+     * @return mixed|string
+     */
     protected function verifySender($queryData)
     {
         // Allow wildcard senders
@@ -112,24 +228,11 @@ class RequestHandler {
             return $queryData['action'];
         }
 
-        // Check for specific rules
-        switch($queryData['sender_type']) {
-            case 'mail_from_address':
-                $this->logger->file->info('sender_payload ' . $queryData['sender_payload']);
-                $this->logger->file->info('postfix ' . $this->data['sender']);
+        $this->logger->file->info('sender_payload ' . $queryData['sender_payload']);
+        $this->logger->file->info('postfix ' . $this->data['sender']);
 
-                if ($queryData['sender_payload'] == $this->data['sender']) {
-                    return $queryData['action'];
-                }
-                break;
-            case 'mail_from_domain':
-                // ToDo
-                // Parse E-Mail to get domain
-                break;
-            case 'mail_from_localpart':
-                // ToDo
-                // Parse E-mail to get localpart
-                break;
+        if ($queryData['sender_payload'] == $this->data['sender']) {
+            return $queryData['action'];
         }
 
         // Default no match return
@@ -138,6 +241,12 @@ class RequestHandler {
         return self::POSTFIX_ACTION_DUNNO;
     }
 
+    /**
+     * Read the configuration into an array.
+     *
+     * @return mixed
+     * @throws BetterprotectErrorException
+     */
     protected function readConfig()
     {
         if (! file_exists(self::CONFIG)) {
