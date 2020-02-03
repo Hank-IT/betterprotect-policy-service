@@ -2,9 +2,9 @@
 
 require __DIR__.'/../vendor/autoload.php';
 
-use App\Database\MySQL;
 use App\Responder;
 use App\Logger\Logger;
+use App\Database\MySQL;
 use App\RequestHandler;
 use App\Exceptions\BetterprotectErrorException;
 
