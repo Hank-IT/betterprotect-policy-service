@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Database;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Capsule\Manager;
 
-class Database
+class MySQL implements DatabaseInterface
 {
     protected $config;
 
@@ -13,9 +13,9 @@ class Database
         $this->config = $config;
     }
 
-    public function boot()
+    public function boot(): Manager
     {
-        $capsule = new Capsule;
+        $capsule = new Manager;
 
         $capsule->addConnection([
             'driver'    => 'mysql',

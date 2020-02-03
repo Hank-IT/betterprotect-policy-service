@@ -2,6 +2,7 @@
 
 require __DIR__.'/../vendor/autoload.php';
 
+use App\Database\MySQL;
 use App\Responder;
 use App\Logger\Logger;
 use App\RequestHandler;
@@ -28,7 +29,9 @@ while($line = fgets($f)) {
                 throw new BetterprotectErrorException('Unknown request type.', RequestHandler::POSTFIX_ACTION_DEFER);
             }
 
-            $action = (new RequestHandler($options))->getResponse();
+            $database = (new MySQL($this->readConfig()['database']))->boot();
+
+            $action = (new RequestHandler($options, $database, new Logger))->getResponse();
         } catch (Throwable $exception) {
             if (method_exists($exception, 'getPostfixAction')) {
                 $action = $exception->getPostfixAction();

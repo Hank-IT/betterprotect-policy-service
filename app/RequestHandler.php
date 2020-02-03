@@ -5,6 +5,7 @@ namespace App;
 use Email\Parse;
 use App\Support\IPv4;
 use App\Logger\Logger;
+use Illuminate\Database\Capsule\Manager;
 use App\Exceptions\BetterprotectErrorException;
 
 class RequestHandler {
@@ -12,30 +13,45 @@ class RequestHandler {
     const POSTFIX_ACTION_DEFER = 'defer_if_permit';
     const POSTFIX_ACTION_DUNNO = 'dunno';
 
+    /**
+     * Postfix input data.
+     *
+     * @var array
+     */
     protected $data;
 
+    /**
+     * Configuration
+     *
+     * @var
+     */
     protected $config;
 
+    /**
+     * @var Logger
+     */
     protected $logger;
 
+
+    /**
+     * @var Manager
+     */
     protected $capsule;
 
     /**
      * RequestHandler constructor.
      *
-     * @param array $data
-     *
-     * @throws BetterprotectErrorException
+     * @param array   $data
+     * @param Manager $database
+     * @param Logger  $logger
      */
-    public function __construct(array $data)
+    public function __construct(array $data, Manager $database, Logger $logger)
     {
         $this->data = $data;
 
-        $this->logger = new Logger;
+        $this->logger = $logger;
 
-        $config = $this->readConfig();
-
-        $this->capsule = (new Database($config['database']))->boot();
+        $this->capsule = $database;
     }
 
     /**
@@ -229,7 +245,6 @@ class RequestHandler {
         }
 
         $this->logger->file->info('sender_payload ' . $queryData['sender_payload']);
-        $this->logger->file->info('postfix ' . $this->data['sender']);
 
         if ($queryData['sender_payload'] == $this->data['sender']) {
             return $queryData['action'];
