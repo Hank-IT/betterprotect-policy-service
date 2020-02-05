@@ -6,10 +6,8 @@ use Email\Parse;
 use App\Support\IPv4;
 use App\Logger\Logger;
 use Illuminate\Database\Capsule\Manager;
-use App\Exceptions\BetterprotectErrorException;
 
 class RequestHandler {
-    const CONFIG = __DIR__ . DIRECTORY_SEPARATOR . '../config/app.json';
     const POSTFIX_ACTION_DEFER = 'defer_if_permit';
     const POSTFIX_ACTION_DUNNO = 'dunno';
 
@@ -254,26 +252,5 @@ class RequestHandler {
         $this->logger->file->info('verifySender returns default action');
 
         return self::POSTFIX_ACTION_DUNNO;
-    }
-
-    /**
-     * Read the configuration into an array.
-     *
-     * @return mixed
-     * @throws BetterprotectErrorException
-     */
-    protected function readConfig()
-    {
-        if (! file_exists(self::CONFIG)) {
-            throw new BetterprotectErrorException('Configuration file unavailable', self::POSTFIX_ACTION_DEFER);
-        }
-
-        $config = json_decode(file_get_contents(self::CONFIG), true);
-
-        if ($config === null && json_last_error() !== JSON_ERROR_NONE) {
-            throw new BetterprotectErrorException('Configuration file invalid', self::POSTFIX_ACTION_DEFER);
-        }
-
-        return $config;
     }
 }

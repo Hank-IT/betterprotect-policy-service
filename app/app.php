@@ -6,6 +6,7 @@ use App\Responder;
 use App\Logger\Logger;
 use App\Database\MySQL;
 use App\RequestHandler;
+use \App\Support\Config;
 use App\Exceptions\BetterprotectErrorException;
 
 $f = fopen( 'php://stdin', 'r' );
@@ -29,7 +30,7 @@ while($line = fgets($f)) {
                 throw new BetterprotectErrorException('Unknown request type.', RequestHandler::POSTFIX_ACTION_DEFER);
             }
 
-            $database = (new MySQL($this->readConfig()['database']))->boot();
+            $database = (new MySQL((new Config)->readConfig()['database']))->boot();
 
             $action = (new RequestHandler($options, $database, new Logger))->getResponse();
         } catch (Throwable $exception) {
