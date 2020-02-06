@@ -6,7 +6,7 @@ use App\Responder;
 use App\Logger\Logger;
 use App\Database\MySQL;
 use App\RequestHandler;
-use \App\Support\Config;
+use App\Support\Config;
 use App\Exceptions\BetterprotectErrorException;
 
 $f = fopen( 'php://stdin', 'r' );

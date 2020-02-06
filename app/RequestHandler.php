@@ -76,7 +76,7 @@ class RequestHandler {
                 $query->where('sender_payload', '=', $this->data['sender'])
                     ->orWhere('sender_payload', '=', '*');
             })
-            ->orderBy('id', 'asc')
+            ->orderBy('priority')
             ->first();
 
         if (empty($queryData)) {
@@ -145,7 +145,6 @@ class RequestHandler {
             ->table('client_sender_access')
             ->select('sender_payload')
             ->where('sender_type', '=', 'mail_from_domain')
-            ->orderBy('id', 'asc')
             ->get();
 
         foreach ($mailFromDomains as $mailFromDomain) {
@@ -177,7 +176,6 @@ class RequestHandler {
             ->table('client_sender_access')
             ->select('sender_payload')
             ->where('sender_type', '=', 'mail_from_localpart')
-            ->orderBy('id', 'asc')
             ->get();
 
         foreach ($mailFromLocalParts as $mailFromLocalPart) {
@@ -205,7 +203,6 @@ class RequestHandler {
             ->table('client_sender_access')
             ->select('client_payload')
             ->where('client_type', '=', 'client_ipv4_net')
-            ->orderBy('id', 'asc')
             ->get();
 
 
