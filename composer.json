@@ -1,12 +1,12 @@
 {
-    "name": "Betterprotect-Policy-Service",
-    "version": "1.0",
+    "name": "hank-it/betterprotect-policy-service",
+    "version": "1.1",
     "require": {
         "php": "^7.2",
         "ext-json": "*",
         "ext-pdo": "*",
         "mmucklo/email-parse": "^2.0",
-        "illuminate/database": "^6.13",
+        "illuminate/database": "8.*",
         "monolog/monolog": "^2.0"
     },
     "autoload": {
