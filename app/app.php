@@ -43,7 +43,16 @@ while($line = fgets($f)) {
             (new Logger)->file->info($exception->getMessage(), (array) $exception);
         }
 
-        (new Logger)->syslog->info('Decision: ' . $action);
+        (new Logger)->syslog->info(sprintf('%s: decision=%s ccert_subject=%s ccert_issuer=%s ccert_fingerprint=%s ccert_pubkey_fingerprint=%s encryption_protocol=%s encryption_cipher=%s encryption_keysize=%s',
+            $options['queue_id'] ?? 'NOQUEUE',
+            $action, $options['ccert_subject'] ?? '',
+            $options['ccert_issuer'] ?? '',
+            $options['ccert_fingerprint'] ?? '',
+            $options['ccert_pubkey_fingerprint'] ?? '',
+            $options['encryption_protocol'] ?? '',
+            $options['encryption_cipher'] ?? '',
+            $options['encryption_keysize'] ?? ''
+        ));
 
         print (new Responder($action))->respond();
 
